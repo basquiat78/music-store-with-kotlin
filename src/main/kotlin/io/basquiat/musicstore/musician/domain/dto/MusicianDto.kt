@@ -1,5 +1,6 @@
 package io.basquiat.musicstore.musician.domain.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.basquiat.musicstore.musician.domain.code.GenreCode
 import io.basquiat.musicstore.musician.domain.entity.Musician
 
@@ -8,8 +9,9 @@ import io.basquiat.musicstore.musician.domain.entity.Musician
  * created by basquiat
  */
 data class MusicianDto(
-    val id: Long,
+    val id: Long? = null,
     val name: String,
+    @JsonProperty("genre")
     private var _genreCode: GenreCode,
 ) {
     /**
@@ -23,13 +25,8 @@ data class MusicianDto(
          * @return MusicianDto
          */
         fun create(musician: Musician): MusicianDto = with(musician) {
-            MusicianDto(name =  name!!, id = id!!, _genreCode = genre!!)
+            MusicianDto(name =  name, id = id, _genreCode = genre?: GenreCode.ETC)
         }
-        /*
-        fun create(musician: Musician): MusicianDto {
-            return MusicianDto(musician.id!!, musician.name!!, musician.genre!!)
-        }
-        */
     }
 
 }

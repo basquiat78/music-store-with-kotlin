@@ -1,685 +1,350 @@
-# 코틀린을 향해 움직여라!
+# 뮤지션 생성 및 업데이트 해보기
 
-오래전 코틀린이 처음 등장했을 때 나는 굳이 이걸 배워야하나?
+저번 브랜치에서는 몇가지 조회 API를 만들어 봤다.
 
-라는 건방진 생각을 한 적이 있다.
+물론 실업무나 프로덕트단계의 어플리케이션은 이보다 더 복잡할 수 있겠지만 컨셉 자체가 변경된 것이 없다.
 
-하지만 임백준 형님의 폴리그랏 관련 연사를 듣고 책을 읽으면서 무시했던 nodeJs와 코틀린을 조금씩 배웠고 관련 언어로 실제 프로덕트에서 활용한 경험은 많은 생각을 하게 했다.
+다만 사용하는 언어가 자바에서 코틀린으로 변경된 것이기 때문에 이정도로만으로도 코틀린을 통해서 어떻게 작업을 해나갈지 충분할 것이다.
 
-이게 7년전 이야기니 코틀린이 이렇게 각광받으리라고는 생각을 했다!!!
+그렇다면 이제는 조회가 아닌 필요한 데이터를 생성하거나 변경된 부분이 있을 경우 변경할 수 있는 API가 필요하다.
 
-어쨰든 몇 년동안은 코틀린을 이용할 일이 없어서 감각이 엄청 둔해지니 뭔가 퇴화된다는 생각과 나이를 먹어감에 따라 경각심이 심히 커져 이 프로젝트를 만들게 되었다.
+# VO를 만들어보자.
 
-또한 회사에도 코틀린을 한번 도입을 해보고 싶은 욕심도 있고하니 시작해 보자!
-
-기본적으로 코틀린을 어느 정도 알고 있다는 가정하에 시작하는 자바를 아시더라도 코틀린에 대한 정보가 전혀없다면 관련 공부를 조금씩 해두는게 좋다.
-
-# Spring boot with JPA
-
-이제는 가장 먼저 생각나는 조합이 아닌가?
-
-이제부터 하나하나 만들어 볼까 한다.
-
-Start!!!!!
-
-# 요구 사항
-
-Spring boot의 최신 버전을 사용하기 때문에 gradle version 7.4.2를 사용하고 있다.        
-java version은 11이다.
-
-# Simple Entity
-
-일단 나는 music-store를 하나 만들어볼까 한다.
-
-예전에는 엔티티와 관련해서 no arg관련 문제로 allOpen같은 plugin을 사용하고 관련 세팅을 따로 해줬던 걸로 기억하는데 지금은 버전이 되면서 jpa관련 플러그인이 나왔다.
-
-관련 세팅 정보는 build.gradle를 참조하면 될 듯 싶다.
-
-우선 뮤지션 정보를 담는 엔티티가 필요할텐데 자바 스타일이라면 다음과 같을 것이다.
+클라이언트로부터 뮤지션을 생성할때 필요한 정보를 먼저 만들 필요가 있다.
 
 ```Kotlin
-
-@Entity
-@Table(name = "musician")
-public class Musician {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    private String name;
-
-    private String genre;
-
-}
-
-```
-
-뮤지션은 앨범 정보를 가질 수 있지만 심플하게 뮤지션의 정보만을 담는 초간단 심플 엔티티이다.
-
-그렇다면 이것을 코틀린으로 바꾸겠다면 어떻게 할 것인가?
-
-```Kotlin
-@Entity
-@Table(name = "musician")
-class Musician(
-
-    var name: String,
-
-    var genre: String? = "etc",
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
-
-    ) {
-
-    init {
-        if(name.isBlank()) {
-            throw MandatoryArgumentException("뮤지션의 이름이 누락되었습니다. 뮤지션의 이름을 확인하세요.")
-        }
-    }
-
-}
-
-```
-
-Long이나 String뒤에 ?는 null-safe와 관련된 코드로 해당 변수가 null이라면 그 이후 선언된 값으로 표시하라는 의미이다.
-
-MandatoryArgumentException를 하나 만들어보자. IlleganArgumentException을 그대로 사용할 수 있지만 코틀린의 특징 중 하나를 한번 사용해보고자 한다.
-
-MandatoryArgumentException.java
-
-```java
 /**
- * MandatoryArgumentException 관련 에러 처리 exception
- * 필수 정보가 없다면 이 익셉션으로 처리하자.
- * created by basquiat
+ * 뮤지션 생성 및 변경을 위한 request 객체
  */
-public class MandatoryArgumentException extends RuntimeException {
+data class MusicianRequest(
+    val name: String,
+    val genre: GenreCode
+)
+```
 
+그리고 이 객체를 받아서 실제 디비로 뮤지션 정보를 생성하는 메소드를 만들어 보자.
+
+```Kotlin
     /**
-     * Constructor with one parameter
-     * @param message
+     * 뮤지션 정보를 db에 생성한다.
+     * @return Musician
      */
-    public MandatoryArgumentException(String message) {
-        super(message);
+    @Transactional
+    fun createMusician(request: MusicianRequest): Musician {
+        val createMusician = with(musicianRequest){Musician(name = name, genre = genre)}
+        musicianRepository.save(createMusician)
+        return createMusician
     }
-
-}
-
 ```
-
-일반적인 자바라면 위 코드와 같이 생성할 수 있다.
-
-하지만 코틀린의 경우 상속 또는 구현, 그러니깐 extends/implements든간에 다음과 같이 ':'으로 구분하고 뒤에 기입을 한다.
-
-이때 특징은 클래스라면 부모 클래스의 생성자를 호출한다.
-
-여럿일 경우에는 방법이 다양한데 일단 위 경우를 살펴본다면 부모 클래스의 생성자는 'super(message) 죽 RuntimeException(message)'이기 때문에 코틀린으로 처리한다면 아래와 같다.
-
-인터페이스의 경우에는 인터페이스를 표기하면 된다.
-
-
-
-MandatoryArgumentException.kt
-
-```Kotlin
-/**
- * NotFoundException 관련 에러 처리 exception
- * 필수 정보가 없다면 이 익셉션으로 처리하자.
- * created by basquiat
- */
-class MandatoryArgumentException(message: String? = "필수 정보가 누락되었습니다.") : RuntimeException(message)
-
-```
-
-String보다는 enum으로 정의해서 사용하는 방식이 가능하기 때문에 GenreCode enum을 작성한다.
-
-```Kotlin
-/**
- * 장르 코드 정의 enum
- */
-enum class GenreCode(val genre: String) {
-
-    JAZZ("Jazz"),
-    ROCK("Rock"),
-    POP("Pop"),
-    HIPHOP("Hiphop"),
-    WORLD("World Music"),
-    ETC("etc");
-
-    companion object {
-        /**
-         * null이면 illegalArgumentException을 던지고 있지만 ETC를 던져도 상관없다.
-         * @param genre
-         * @return GenreCode
-         */
-        fun of(genre: String?): GenreCode {
-            return values().firstOrNull { genreEnum -> genreEnum.genre.equals(genre, ignoreCase = true) }
-                ?: throw IllegalArgumentException("맞는 장르 코드가 없습니다. 장르 코드를 확인하세요.")
-        }
-        /*
-        fun of(genre: String?): GenreCode {
-            return values().firstOrNull { genreEnum -> genreEnum.genre.equals(genre, ignoreCase = true) }
-                   ?: ETC
-        }*/
-
-    }
-
-}
-```
-companion object는 자바에서 말하는 정적 메소드 생성하는 부분과 같다.
-
-코틀린에서 자바의 Stream API를 사용할 수 있지만 lodash와 비슷한 자체 Collection를 제공하기 때문에 코드를 좀더 간결하게 작성하기 위해 적극 사용한다.
-
-스트림이나 콜렉션에서 제공하는 API들의 형태는 자바와 비슷하지만 블록 코드가 약간 다른 면이 있다. 이것은 관련 정보를 찾아보면 잘 나온다.
-
-## 빌드 패턴을 적용하고 싶은데요?
-
-코틀린과 관련해서 클래스와 인터페이스에 대한 내용을 여기서 일일히 언급하기에는 힘이 부친다.
-
-게다가 나는 롬복을 사용하고 싶지 않다. 왜냐하면 코틀린에서 대부분 이것을 지원해 주기 때문이다.
-
-~~어느 정도의 편의성을 좀 버려야 한다~~
-
-빌드 패턴을 적용하는 다양한 방법이 있는데 여기서는 baeldong에서 소개하는 방식을 활용한 빌드 패턴을 차용하고자 한다.
-
-
-일반적으로 constructor는 주 생성자를 의미해서 앞에 특정 키워드가 없다면 생략가능하지만 빌드 패턴을 활용하기 위해서 private로 만든다.
-
-즉 일반적인 방식으로는 생성자를 통한 dto 생성이 불가능해진다.
-
-물론
-
-```
-Musician("name", genre, id)
-```
-처럼도 가능하게 하고 싶다면 private constructor를 선언하지 않아도 무방하다.
+실제로 Musican을 반환해도 되고 반환하지 않아도 상관없다.
 
 
 ```Kotlin
-@Entity
-@Table(name = "musician")
-class Musician private constructor(
-
-    var name: String?,
-
-    @Enumerated(EnumType.STRING)
-    var genre: GenreCode?,
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long?,
-
-    ) {
-
-    init {
-        if(name == null) {
-            throw MandatoryArgumentException("뮤지션 이름은 필수 입니다.")
-        }
-    }
-
-    data class Builder(
-        var name: String? = null,
-        var genre: GenreCode? = GenreCode.ETC,
-        var id: Long? = null
-    ) {
-        fun name(name: String) = apply { this.name = name }
-        fun genre(genre: GenreCode) = apply { this.genre = genre }
-        fun id(id: Long) = apply { this.id = id }
-        fun build() = Musician(name, genre, id)
-    }
-
-}
-
-```
-
-```Kotlin
-
-class SimpleTest {
-
     @Test
-    @DisplayName("빌드 패턴 적용")
-    fun builderPattern_TEST() {
-        var m = Musician.Builder()
-            .name("Charlie Parker")
-            .genre(GenreCode.JAZZ)
-            .build()
-        println(m.name)
-    }
-}
+    @DisplayName("뮤지션 정보를 db에 인서트성한다.")
+    fun createMusician_TEST() {
+        val createdMusician = musicianService.createMusician(MusicianRequest("Miles Davis", GenreCode.JAZZ))
+        assertThat(createdMusician.name).isEqualTo("Miles Davis")
 
-
-```
-
-다만 단점이라면 dto라든가 엔티티에서 이 빌드패턴을 사용할 때 변수가 많으면 진짜.......
-
-## Setter와 Getter에 대한 고찰
-
-객체를 생성할 때 val과 var의 차이를 알아야 한다.
-
-그리고 자바처럼
-
-```
-obj.setName("name") 또는 obj.getName()
-```
-
-같은 방식이 아니고 자바스크립트나 고랭처럼
-
-```
-obj.name = "change name" 또는 val name = obj.name
-```
-같은 방식이다.
-
-일반적으로 var로 하게 되면 setter와 getter를 전부 열어두는 방식이고 val의 경우에는 getter의 경우에만 public하고 setter에 대해서는 닫혀있다.
-
-JPA와 관련해서 엔티티를 생성할 때 개발자의 습꽌이나 코딩 스타일에 따라 이것은 몇가지 불편함이 존재하는데 다음과 같은 방식으로 코드 컴벤션을 만들어가는게 최선이다.
-
-### 일단 오픈!!!!!
-
-일단 다 열어두고 팀의 개발 문화에 엔티티의 경우에는 특별한 경우가 아니라면 setter를 사용하지 않는다는 문화를 만드는 경우이다.
-
-사실 코틀린을 사용하는 이유는 코드의 간결함이 우선인 경우가 많다.
-
-그리고 코틀린에 국한하지 않고 자바에서도 마찬가지로 통용될 수 있는 방법이다.
-
-따라서 자바 스타일이라면 어떤 변수의 값을 변경한다면 통상적인 방식으로 'changeName'같은 함수를 만들어 이름을 주고 이름을 변경한다는 명확한 의미를 가진 메소드를 통해 변경하도록 한다.
-
-### 커스텀 Setter
-
-```Kotlin
-@Entity
-@Table(name = "musician")
-class Musician(
-    name: String?,
-
-    @Enumerated(EnumType.STRING)
-    var genre: GenreCode?,
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long?,
-
-    ) {
-
-    init {
-        if(name == null) {
-            throw MandatoryArgumentException("뮤지션 이름은 필수 입니다.")
-        }
-    }
-
-    var name: String? = name
-        private set
-
-    data class Builder(
-        var name: String? = null,
-        var genre: GenreCode? = GenreCode.ETC,
-        var id: Long? = null
-    ) {
-        fun name(name: String) = apply { this.name = name }
-        fun genre(genre: GenreCode) = apply { this.genre = genre }
-        fun id(id: Long) = apply { this.id = id }
-        fun build() = Musician(name, genre, id)
-    }
-
-}
-```
-생성자에서는 다음과 같이 타입을 정하지 않고 객체의 바디쪽에 var로 선안한다.
-
-이떼 private set을 통해서 setter를 아예 막는 방식이다.
-
-private 대신에 protected를 사용하는 방식도 있다.
-
-```Kotlin
-@Entity
-@Table(name = "musician")
-class Musician(
-
-    name: String?,
-
-    @Enumerated(EnumType.STRING)
-    var genre: GenreCode?,
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long?,
-
-    ) {
-
-    init {
-        if(name == null) {
-            throw MandatoryArgumentException("뮤지션 이름은 필수 입니다.")
-        }
-    }
-
-    var name: String? = name
-        protected set
-
-    fun changeName(name: String) {
-        this.name = name;
-    }
-
-    data class Builder(
-        var name: String? = null,
-        var genre: GenreCode? = GenreCode.ETC,
-        var id: Long? = null
-    ) {
-        fun name(name: String) = apply { this.name = name }
-        fun genre(genre: GenreCode) = apply { this.genre = genre }
-        fun id(id: Long) = apply { this.id = id }
-        fun build() = Musician(name, genre, id)
-    }
-
-}
-```
-
-이렇게 하면
-
-```
-musician.name = "changeName"
-```
-처럼 값을 변경할 수 없고 changeName 메소드를 통해서 이름을 변경할 수 있다.
-
-### Backing Property
-
-backing field방식과는 다르게 변수명에 대한 스키마와 다르게 작업을 한다면 고려해 볼만한 방식이다.
-
-
-```Kotlin
-
-@Entity
-@Table(name = "musician")
-class Musician(
-
-    private var _name: String?,
-
-    @Enumerated(EnumType.STRING)
-    var genre: GenreCode?,
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long?,
-
-    ) {
-
-    init {
-        if(_name == null) {
-            throw MandatoryArgumentException("뮤지션 이름은 필수 입니다.")
-        }
-    }
-
-    val name get() = this._name
-
-    fun changeName(name: String) {
-        this._name = name
-    }
-
-    data class Builder(
-        var name: String? = null,
-        var genre: GenreCode? = GenreCode.ETC,
-        var id: Long? = null
-    ) {
-        fun name(name: String) = apply { this.name = name }
-        fun genre(genre: GenreCode) = apply { this.genre = genre }
-        fun id(id: Long) = apply { this.id = id }
-        fun build() = Musician(name, genre, id)
-    }
-
-}
-```
-
-생성자에서 private var로 선언하고 _name처럼 변수명을 선언한다. 이게 관례라고 하는데 그렇다고 하니까 그렇게 사용하자.
-
-private var로 선언하게 되면 내부에서만 접근이 가능하게 된다.
-
-이후에 객체의 바디에 val로 선언을 해서 이 값을 반환하게 하는 방식이다. setter는 필요하다면 changeName같은 메소드를 사용하면 된다.
-
-어떤 방식이든 상황에 맞게 사용하면 좋겠지만 여기서는 코틀린의 간결함을 추구하고자 하기 때문에 오픈하는 방식으로 갈 예정이다.
-
-관련 내용은 테스트로 남긴다.
-
-# 일단 질러보자
-
-컨트롤러를 하나 만든다.
-
-
-```Kotlin
-/**
- * musician의 정보와 관련된 컨트롤러
- * created by basquiat
- */
-@RestController
-@RequestMapping("/api/music/store")
-class MusicianController {
-
-    @GetMapping("/musicians")
-    fun musicians() : List<Musician> {
-        return listOf(Musician.Builder()
-            .name("Chalie Parker")
-            .genre(GenreCode.JAZZ)
-            .build(),
-            Musician.Builder()
-                .name("Miles Davis")
-                .genre(GenreCode.JAZZ)
-                .build()
-        )
-    }
-
-}
-```
-
-로직은 레이어를 나누지 않고 단순하게 컨트롤러단에서 몇개의 정보를 보내주는 방식으로 진행한다.
-
-포스트맨이나 몇 몇 RESTful 도구를 사용해서 날려보자.
-
-현재 만든 녀석은 GET이니 브라우져에서 바로 다음 주소로 때려봐도 된다.
-
-http://localhost:8081/api/music/store/musicians
-
-```json
-[
-  {
-    "name": "Chalie Parker",
-    "genre": "JAZZ",
-    "id": null
-  },
-  {
-    "name": "Miles Davis",
-    "genre": "JAZZ",
-    "id": null
-  }
-]
-```
-여기까지 왔다면 여러분은 가장 기본적인 Spring boot 세팅과 코틀린에서 객체를 다루는 방식을 어느 정도 공부하게 된 것이다. 👏
-
-# Service Layer를 만들어보자
-
-이제는 정말 초간단하게 컨트롤로에 있는 저 녀석을 Service 레이어로 옮겨보자.
-
-```Kotlin
-/**
- * 뮤지션의 정보를 다루는 서비스 객체
- * created by basquiat
- */
-@Service
-class MusicianService {
-
-    /**
-     * 뮤지션의 정보를 가져온다.
-     * @return List<Musician> 뮤지션 리스트
-     */
-    fun fetchMusicians(): List<Musician> {
-        return listOf(Musician.Builder()
-            .name("Chalie Parker")
-            .genre(GenreCode.JAZZ)
-            .build(),
-            Musician.Builder()
-                .name("Miles Davis")
-                .genre(GenreCode.JAZZ)
-                .build()
-        )
-    }
-
-}
-```
-캬! 초간단하다. 그냥 컨트롤러에 있는 코드를 단순하게 옮겼다.
-
-그렇다면 이제는 이녀석을 컨트롤러에 DI를 받도록 기존에 만들어 놓은 MusicianController를 수정하자.
-
-
-```Kotlin
-/**
- * musician의 정보와 관련된 컨트롤러
- * created by basquiat
- */
-@RestController
-@RequestMapping("/api/music/store")
-class MusicianController(
-    private val musicianService: MusicianService,
-) {
-
-    @GetMapping("/musicians")
-    fun musicians() : List<Musician> {
-        return musicianService.fetchMusicians()
-    }
-
-}
-```
-오 이제 다시 한번 테스트를 해보자.
-
-```Kotlin
-@SpringBootTest
-class MusicianServiceTest @Autowired constructor(
-    private val musicianService: MusicianService,
-) {
-
-    @Test
-    @DisplayName("뮤지션 정보를 가져오는 메소도를 테스트한다.")
-    fun fetchMusicians_TEST() {
         val musicians = musicianService.fetchMusicians()
-        assertThat(musicians).hasSize(2)
+        assertThat(musicians).hasSize(3)
     }
-}
+```
+기존에 2개의 정보가 DB에 들어있고 새로운 뮤지션이 생성되었으니 전체 뮤지션 정보를 가져오면 3개의 row가 반환될테니 이 테스트는 통과할 것이다.
+
+컨트롤러에도 관련 메소드를 만들어 보자.
+
+
+```Kotlin
+    /**
+     * 뮤지션 정보를 생성한다.
+     */
+    @PostMapping("/musicians")
+    fun createMusician(@RequestBody request: MusicianRequest) {
+        musicianService.createMusician(request)
+    }
 ```
 
-이제는 서버를 다시 실행해서 포스트맨이나 브라우저에서 확인해보자.
+포스트맨을 통해서 테스트해보자. 여기서는 반환 객체를 설정하지 않았지만 제대로 생성되고 아이디가 반환이 되는지 보고 싶다면 생성된 뮤지션 정보를 반환해도 무방하다.
 
-# 그렇다면 이제 Persistence 레이어를 작성하자.
+나의 경우에는 포스트맨을 통해서 하나의 뮤지션 정보를 하나 더 밀어 넣었다.
 
-이제는 드디어 RDBMS와 JPA를 활용해보자.
+따라서 현재 musician 테이블에서는 총 4개의 row가 생성되어 있다.
 
-일단 이 프로젝트는 내 컴퓨타에 mySql이 설치되어 있으니 mySql를 활용한다.
+이제는 업데이트를 해보자.
 
-H2같은 경우에는 다음과 같이 build.gradle에 mySql대신에
+크게 달라질 것이 없을 것이다.
 
-```
-    runtimeOnly 'com.h2database:h2'
-```
-를 선언하고
+다만 여기서는 dirty checking을 확인해 보기 위해서 이름만 변경하는 메소드를 만들 것이다.
 
-appliction.yml에 다음과 같이
+만일 이름과 장르가 잘못되었다면 JPA를 사용하기 때문에 save를 통해서 전체 객체로 넘겨 변경할 수 있다.
 
-```
-spring:
-  datasource:
-    url: 'jdbc:h2:mem:basquiat'
-    username: '<<your name>>'
-    password: '<<your password>>'
-    driver-class-name: org.h2.Driver
-  jpa:
-    hibernate:
-      ddl-auto: create
-    properties:
-      hibernate:
-        format_sql: true
-        show_sql: true
-  h2:
-    console:
-      enabled: true
-      # 패스는 편한대로
-      path: '/h2-console'
+변경 요청을 위한 객체를 따로 만들 수 있지만 여기서는 그냥 기존에 만들어 놓은 MusicianRequest를 그대로 활용할 생각이다.
 
-```
-지금은 준비된 스키마와 인서트 쿼리를 나의 경우에는 직접 넣어서 테스트를 실행할 예정이다.
-
-H2의 경우에도 콘솔창으로 접근해서 해도 상관없다.
-
-이것도 싫다면 서버 실행시 데이터를 밀어넣게 만드는 방법을 고려하면 된다.
-
-
-```sql
-
-CREATE TABLE `musician` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(45) NOT NULL,
-  `genre` enum('JAZZ','ROCK','POP','HIPHOP','WORLD','ETC') NOT NULL,
-  PRIMARY KEY (`id`)
-) COMMENT='뮤지션 초간단 정보를 담는 테이블';
-
-INSERT INTO 
-	musician (name, genre)
-VALUES 
-	('Charlie Parker', 'JAZZ'),
-	('John Coltrane', 'JAZZ');
-```
-
-나의 경우에는 일종의 하나의 템플릿 같은 언터페이스를 사용한다.
-
-```kotlin
-/**
- * jpaRepository Base -> 도메인별 레파지토리 생성시 해당 인터페이스를 상속해서 사용한다.
- * @param M entity
- * @param ID entity ID
- */
-@NoRepositoryBean
-interface BaseRepository<M, ID : Serializable?> : JpaRepository<M, ID>, JpaSpecificationExecutor<M>
-```
-
-이제는 MusicianRepository를 작성하자.
+기존에 만든 MusicianRequest은 다음과 같이 변경될 수 있다.
 
 ```Kotlin
 /**
- * MusicianRepository
+ * 뮤지션 생성 및 변경을 위한 request 객체
  */
-interface MusicianRepository : BaseRepository<Musician, Long>
+data class MusicianRequest(
+    val name: String,
+    val genre: GenreCode? = GenreCode.ETC,
+    val id: Long? = null
+)
 ```
-SooooOOO~~~~ SIMPLE!!!!!
 
-이제는 MusicianService에 이녀석을 DI받자
+이제는 업데이트 메소드를 생성한다.
 
 ```Kotlin
-/**
- * 뮤지션의 정보를 다루는 서비스 객체
- * created by basquiat
- */
-@Service
-class MusicianService(
-    private val musicianRepository: MusicianRepository
-) {
+    /**
+     * 뮤지션 정보를 변경한다.
+     */
+    @Transactional
+    fun updateMusician(request: MusicianRequest) {
+        val selectMusician = musicianRepository.findByIdOrThrow(request.id)
+        selectMusician.name = request.name
+    }
+```
 
+물론 저렇게 접근하지 않고 명확하게 뮤지션의 이름을 변경한다는 메소드를 엔티티에 만들어서 호출하는 방법도 좋다.
+
+하지만 여기서는 그냥 코드를 추가하지 않고 심플하게 갈것이다.
+
+이제 테스트를 해보자.
+
+```Kotlin
+    @Test
+    @DisplayName("뮤지션 정보를 변경한다.")
+    fun updateMusician_TEST() {
+        // Miles Davis에서 Bud Powell로 변경한다.
+        musicianService.updateMusician(MusicianRequest(id = 3, name = "Bud Powell"))
+
+        val updatedMusician = musicianService.fetchMusicianById(3)
+        assertThat(updatedMusician.name).isEqualTo("Bud Powell")
+    }
+```
+
+컨트롤러도 메소드를 추가하자.
+
+```Kotlin
+    /**
+     * 뮤지션 정보를 변경하고 변경된 정보를 담아서 보내준다.
+     * @param request: MusicianRequest
+     * @return ResponseResult<MusicianDto>
+     */
+    @PatchMapping("/musicians")
+    fun updateMusician(@RequestBody request: MusicianRequest): ResponseResult<MusicianDto> {
+        val musicianId = request.id ?: mandatoryParam("변경할 뮤지션의 id는 필수 입니다.");
+        musicianService.updateMusician(request)
+        return ResponseResult.of(musicianService.fetchMusicianById(musicianId))
+    }
+```
+
+이제는 포스트맨을 통해서 뮤지션의 이름을 변경해 보자. 변경한 이후 변경된 뮤지션 정보가 제대로 반환될 것이다.
+
+
+## 기존의 fetchMusicians를 페이징처리를 해보자.
+
+리스트로 보여주는 정보의 경우에는 화면에서 페이징처리를 통해서 보여줘야 한다.
+
+지금이야 몇개의 데이터가 없기 때문에 가능하지만 데이터가 많아지고 하게 되면 모든 데이터를 다 불러오는 것은 상당한 리소스가 든다.
+
+다음과 같이 변경하자.
+
+기본적으로 레파지토리는 처음 작성할 때 템플릿 인터페이스처럼 활용하고 있는 BaseRepository가 이것을 해결해 주기에 다음과 같이 작성하고
+
+```Kotlin
+    /**
+     * 뮤지션 리스트를 반환한다.
+     * @return ResponseResult<List<MusicianDto>>
+     */
+    @GetMapping("/musicians")
+    fun musicians(@RequestParam("page", defaultValue = "0") page: Int, @RequestParam("size", defaultValue = "10") size: Int): ResponseResult<Page<MusicianDto>> {
+        return ResponseResult.of(musicianService.fetchMusicians(PageRequest.of(page, size)))
+    }
+
+```
+
+서비스쪽에서도
+
+```Kotlin
     /**
      * 뮤지션의 정보를 가져온다.
-     * @return List<Musician> 뮤지션 리스트
+     * @return Page<MusicianDto> 뮤지션 리스트
      */
     @Transactional(readOnly = true)
-    fun fetchMusicians(): List<Musician> {
-        return musicianRepository.findAll()
-    }
+    fun fetchMusicians(pageable: Pageable?): Page<MusicianDto> = musicianRepository.findAll(pageable)
+                                                                                   .map(MusicianDto::create)
+```
 
+이렇게 해주면 된다.     
+
+Pageable에서도 map을 제공한다. 따라서 기존의 dto로 변경하는 코드는 변경이 필요없다.      
+
+[page 0](localhost:8081/api/music/store/musicians?page=0&size=2)
+
+[page 1](localhost:8081/api/music/store/musicians?page=1&size=2)
+
+기본적으로 page는 1이 아닌 0부터 시작한다.
+
+일단 날려보면 다음과 같이
+
+```json
+// localhost:8081/api/music/store/musicians?page=0&size=2
+{
+    "result": {
+        "content": [
+            {
+                "id": 1,
+                "name": "Charlie Parker",
+                "genre": "Jazz"
+            },
+            {
+                "id": 2,
+                "name": "John Coltrane",
+                "genre": "Jazz"
+            }
+        ],
+        "pageable": {
+            "sort": {
+                "sorted": false,
+                "unsorted": true,
+                "empty": true
+            },
+            "pageNumber": 0,
+            "pageSize": 2,
+            "offset": 0,
+            "paged": true,
+            "unpaged": false
+        },
+        "totalPages": 2,
+        "totalElements": 4,
+        "last": false,
+        "numberOfElements": 2,
+        "size": 2,
+        "first": true,
+        "number": 0,
+        "sort": {
+            "sorted": false,
+            "unsorted": true,
+            "empty": true
+        },
+        "empty": false
+    }
+}
+
+// localhost:8081/api/music/store/musicians?page=1&size=2
+{
+    "result": {
+        "content": [
+            {
+                "id": 3,
+                "name": "Charles Mingus",
+                "genre": "Jazz"
+            },
+            {
+                "id": 4,
+                "name": "Thelonious Monk",
+                "genre": "Jazz"
+            }
+        ],
+        "pageable": {
+            "sort": {
+                "sorted": false,
+                "unsorted": true,
+                "empty": true
+            },
+            "pageNumber": 1,
+            "pageSize": 2,
+            "offset": 2,
+            "paged": true,
+            "unpaged": false
+        },
+        "totalPages": 2,
+        "totalElements": 4,
+        "last": true,
+        "numberOfElements": 2,
+        "size": 2,
+        "first": false,
+        "number": 1,
+        "sort": {
+            "sorted": false,
+            "unsorted": true,
+            "empty": true
+        },
+        "empty": false
+    }
+}
+
+```
+하지만 이 방식으로는 뭔가 번잡한 느낌을 준다.
+
+또한 page의 경우에는 0부터 시작하는데 클라이언트에서는 이것을 헛갈리게 하지 않기 위해서 1부터 받게 만들 것이다.
+
+그리고 content와 페이지 정보중 필요한 부분만 생성해서 보내주고자 한다.
+
+```Kotlin
+/**
+ * pagination
+ */
+data class Pagination(
+    private var page: Int? = 0,
+    private var size: Int? = 10,
+    var last: Boolean? = false,
+    var totalPage: Int? = 0,
+    var totalCount: Long? = 0,
+    private var _currentPage: Int? = 0
+) {
+
+    val offset : Int get() = this.page!! - 1
+    val limit  : Int get() = this.size!!
+    val currentPage: Int get() = this.page!!
+
+    /**
+     * 0이거나 0보다 작으면 기본 값을 세팅해준다.
+     */
+    init {
+        if(page!! <= 0) {
+            this.page = 1
+        }
+
+        if(size!! <= 0) {
+            this.size = 10
+        }
+    }
 }
 ```
-이제는 아까 만들어 놓은 테스트 코드를 실행해 보자.
+위와  같이 Pagination을 하나 만든다.
 
-하지만 우리는 리스트 자체를 보내기보다는 응답객체에 담아서 보내보려고 한다.
+이것을 통해서 요청시 또는 응답시 필요한 정보를 내려줄 생각이다.
 
+페이징 처리를 클라이언트에서 어떻게 하느냐에 따라 보내줄 정보가 다를텐데 나의 경우에는 다음 정보만 필요하다.
+
+현재 요청한 페이지, 전체 카운트 수, 전체 페이지 수, 그리고 현재 요청한 부분이 마지막 페이지정보인지만 보내줄 생각이다.
+
+첫번째 페이지는 offset정보가 0이라면 첫번째 페이지일테니!
+
+나는 Pagination을 만들어 사용하고 있지만 여러분이 사용하는 방식에 맞춰서 변경하면 된다.
+
+회사마다 다르기도 하고 어떤 곳은 dataTables같은 녀석들과 연계헤서 사용하기 위한 다양한 방식을 선택하기도 하기 때문이다.
+
+물론 사용하는 방식에 따라 이 방식을 고려해볼 수 있고 그냥 page의 정보를 그대로 활용할 수도 있다.
+
+즉 이 방법은 상황에 따라 커스텀해서 사용하면 될것이다.
+
+그리고 응답 객체도 변경해야 한다.
 
 ```Kotlin
 /**
  * Rest API response 정보를 담은 객체
  */
+@JsonPropertyOrder("result", "pagination")
 data class ResponseResult<T>(
-    private var _result: T?,
+    private val _result: T?,
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    val pagination: Pagination?
 ) {
 
     val result get() = this._result
@@ -688,152 +353,83 @@ data class ResponseResult<T>(
         /**
          * ResponseResult를 생성하는 정적 메소드
          * @param result
-         * @param <T>
          * @return ResponseResult<T>
          */
-        fun <T> of(result: T): ResponseResult<T> {
-            return ResponseResult(result)
-        }
+        fun <T> of(result: T?, pagination: Pagination? = null) = ResponseResult(result, pagination)
     }
 
 }
 ```
-사실 Backing Property를 활용하지 않아도 되지만 간지나보이는거 같아서 이렇게 작성해 보자.
 
-정보를 담아 내주는 객체로 data class로 만든다. 그리고 companion object를 이용해 정적메소드를 제공하자.
+페이징 정보가 없는 경우도 있고 있는 경우도 있기 때문에 null이라면 응답 정보에서 보여주지 않게 JsonInclude(JsonInclude.Include.NON_NULL)을 사용한다.
 
-최총 MusicianController는 다음과 같이 바뀔 것이다.
+일단 컨트롤러는 다음과 같이 변경한다.
 
 ```Kotlin
-/**
- * musician의 정보와 관련된 컨트롤러
- * created by basquiat
- */
-@RestController
-@RequestMapping("/api/music/store")
-class MusicianController(
-    private val musicianService: MusicianService,
-) {
-
+    /**
+     * 뮤지션 리스트를 반환한다.
+     * @return ResponseResult<List<MusicianDto>>
+     */
     @GetMapping("/musicians")
-    fun musicians() : ResponseResult<List<Musician>> {
-        return ResponseResult.of(musicianService.fetchMusicians())
-    }
-
-}
-```
-
-이걸로도 뭔가 부족하다. entity를 dto에 담아서 보내고 싶은 욕구가 마구 생긴다.
-
-```Kotlin
-/**
- * musicianDTO
- * created by basquiat
- */
-data class MusicianDto(
-    val id: Long,
-    val name: String,
-    private var _genreCode: GenreCode,
-) {
-    /**
-     * 클라이언트로 정보를 내려줄 때는 code값으로 보내주기 위해 backing property를 사용
-     */
-    val genre: String get() = this._genreCode.genre
-
-    companion object {
-        /**
-         * @param musician
-         * @return MusicianDto
-         */
-        fun create(musician: Musician): MusicianDto = with(musician) {
-            MusicianDto(name =  name!!, id = id!!, _genreCode = genre!!)
+    fun musicians(pagination: Pagination): ResponseResult<List<MusicianDto>> {
+        var musiciansWithPage = musicianService.fetchMusicians(PageRequest.of(pagination.offset, pagination.limit));
+        with(musiciansWithPage) {
+            pagination.totalCount = totalElements
+            pagination.totalPage = totalPages
+            pagination.last = isLast
         }
-        /*
-        fun create(musician: Musician): MusicianDto {
-            return MusicianDto(musician.id!!, musician.name!!, musician.genre!!)
-        }
-        */
+        return ResponseResult.of(musiciansWithPage.content, pagination)
     }
-
-}
 ```
-심플한 dto를 만들고 companion object를 이용해 엔티티를 받는 메소드를 통해 dto를 반환하게 만들자.
 
-빌드 패턴을 활용해도 무방하다!!!
+그리고 전체 뮤지션 정보를 가져오는 API를 여러 상황에 맞게 날려보자.
 
-하지만 위 코드를 보면 신기한 것을 알 수 있는데 일반적으로 생성자를 통한 객체 생성은 순서가 맞아야 한다.
-
-하지만 와와 같이 해당 객체의 생성자에 있는 변수명으로 접근하면 순서와는 상관없이 작동하게 된다.
-
-빌드 패턴이 코드의 간결함에 방해가 된다면 이 방식을 통해서 처리하는 방식도 좋다.
-
-앞으로의 코드는 이 방식을 통해서 작성할 예정이다.
-
-그리고 with를 사용해서 코드를 더 간략하게 처리하자!
-
-Scope Function에는 with, run, let, also, takeIf, takeUnless와 빌드 패턴시 사용한 apply가 있는데 이 부분 역시 인터넷에 잘 나와있다.
-
-backng property를 이용한 이유는 enum코드를 받아 code정보를 화면에 보내주기 위해서이다.
-
-```Kotlin
-/**
- * 뮤지션의 정보를 다루는 서비스 객체
- * created by basquiat
- */
-@Service
-class MusicianService(
-    private val musicianRepository: MusicianRepository
-) {
-
-    /**
-     * 뮤지션의 정보를 가져온다.
-     * @return List<Musician> 뮤지션 리스트
-     */
-    @Transactional(readOnly = true)
-    fun fetchMusicians(): List<MusicianDto> {
-        return musicianRepository.findAll()
-            .map {entity -> MusicianDto.create(entity)}
-        //.map(MusicianDto.Companion::create)
-
-    }
-
-}
-```
-toList()는 생략해도 상관없다.
-
-map을 보면 코드 블락이 좀 다른 것을 알 수 있다.
-
-입맛에 맞는 방식을 사용하는 것은 개발자 몫!
-
-기존의 만들어 놓은 테스트 서비스 코드는 변화가 없을 것이다.
-
-서버를 실행해서 API를 날려보면
-
-```json// 20220817154453
-// http://localhost:8081/api/music/store/musicians
-
+```json
 {
-  "result": [
-    {
-      "id": 1,
-      "name": "Charlie Parker",
-      "genre": "Jazz"
-    },
-    {
-      "id": 2,
-      "name": "John Coltrane",
-      "genre": "Jazz"
+    "result": [
+        {
+            "id": 1,
+            "name": "Charlie Parker",
+            "genre": "Jazz"
+        },
+        {
+            "id": 2,
+            "name": "John Coltrane",
+            "genre": "Jazz"
+        },
+        {
+            "id": 3,
+            "name": "Charles Mingus",
+            "genre": "Jazz"
+        }
+    ],
+    "pagination": {
+        "last": false,
+        "totalPage": 2,
+        "totalCount": 4,
+        "currentPage": 1,
+        "offset": 0,
+        "limit": 3
     }
-  ]
 }
+
 ```
 
-genre에서는 대문자 코드가 아닌 내부에 선언한 코드 정보가 제대로 나오는 것을 확인할 수 있다.
+# At a Glance
 
-전체적으로 코드가 자바에 비해 엄청 간결해진것을 알게 된다.
+여기서 사용하는 VO나 여러 방법이 항상 정답은 아닐것이다.
 
-여러분은 이제 Spring boot를 활용한 가장 기본적인 웹의 컨셉을 적용해 자바에서 코틀린으로 변경했다. 👊
+회사 또는 개발자의 습관이나 스타일에 따라 얼마든지 바뀔 수 있기 때문이다.
 
-# At A Glance
+그럼에도 기본 컨셉은 그대로 유지될 것이기 때문이다.
 
-다음 브랜치에서는 나머지 기능을 구현해 볼 생각이다. 👋
+이 브랜치에서는 delete관련 로직은 제외한다.       
+
+스프링 부트에서 제공하는 delete를 통해 지우기 원하는 정보를 조회후 삭제하면 되기 때문에 save랑 똑같은 방식이기 때문이다.     
+
+실제 DB로부터 지우는 방법도 있을 것이고 상태 컬럼을 통해 업데이트 하는 방식으로 진행될 것이기 때문이다.       
+
+
+
+
+
