@@ -18,15 +18,8 @@ enum class GenreCode(val genre: String) {
          * @param genre
          * @return GenreCode
          */
-        fun of(genre: String?): GenreCode {
-            return values().firstOrNull { genreEnum -> genreEnum.genre.equals(genre, ignoreCase = true) }
-                   ?: throw IllegalArgumentException("맞는 장르 코드가 없습니다. 장르 코드를 확인하세요.")
-        }
-        /*
-        fun of(genre: String?): GenreCode {
-            return values().firstOrNull { genreEnum -> genreEnum.genre.equals(genre, ignoreCase = true) }
-                   ?: ETC
-        }*/
+        fun of(genre: String?): GenreCode = values().firstOrNull { genreEnum -> genreEnum.genre.equals(genre, ignoreCase = true) }
+                                            ?: throw IllegalArgumentException("맞는 장르 코드가 없습니다. 장르 코드를 확인하세요.")
     }
 
 }
