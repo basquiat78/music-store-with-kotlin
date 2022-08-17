@@ -13,12 +13,9 @@ data class ResponseResult<T>(
         /**
          * ResponseResult를 생성하는 정적 메소드
          * @param result
-         * @param <T>
          * @return ResponseResult<T>
          */
-        fun <T> of(result: T): ResponseResult<T> {
-            return ResponseResult(result)
-        }
+        fun <T> of(result: T?) = ResponseResult(result)
     }
 
 }
