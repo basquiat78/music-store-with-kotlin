@@ -2,8 +2,10 @@ package io.basquiat.common.util
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.basquiat.common.domain.Pagination
 import io.basquiat.common.exception.MandatoryArgumentException
 import io.basquiat.common.exception.ObjectEmptyException
+import org.springframework.data.domain.Page
 
 /**
  * 메세지가 없는 경우
@@ -65,3 +67,14 @@ fun <T> convertToObject(json: String, valueType: TypeReference<T>): T = mapper.r
  * TypeReference를 편하게 쓰기 위한 메소드
  */
 fun <T> typeRef(valueType: Class<T>): TypeReference<List<T>> = object: TypeReference<List<T>>() {}
+
+/**
+ * pagination정보를 만드는 메소드
+ */
+fun <T> setPagination(pagination: Pagination, page: Page<T>) {
+    with(page) {
+        pagination.totalCount = totalElements
+        pagination.totalPage = totalPages
+        pagination.last = isLast
+    }
+}

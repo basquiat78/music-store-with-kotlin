@@ -3,6 +3,7 @@ package io.basquiat.musicstore.musician.controller
 import io.basquiat.common.domain.Pagination
 import io.basquiat.common.domain.ResponseResult
 import io.basquiat.common.util.mandatoryParam
+import io.basquiat.common.util.setPagination
 import io.basquiat.musicstore.musician.domain.code.GenreCode
 import io.basquiat.musicstore.musician.domain.dto.MusicianDto
 import io.basquiat.musicstore.musician.domain.vo.MusicianRequest
@@ -27,11 +28,7 @@ class MusicianController(
     @GetMapping("/musicians")
     fun musicians(pagination: Pagination): ResponseResult<List<MusicianDto>> {
         val musiciansWithPage = musicianService.fetchMusicians(PageRequest.of(pagination.offset, pagination.limit));
-        with(musiciansWithPage) {
-            pagination.totalCount = totalElements
-            pagination.totalPage = totalPages
-            pagination.last = isLast
-        }
+        setPagination(pagination, musiciansWithPage)
         return ResponseResult.of(musiciansWithPage.content, pagination)
     }
 
