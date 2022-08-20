@@ -6,4 +6,6 @@
 
 [1. 일단 간단한 것부터 시작해보자](https://github.com/basquiat78/music-store-with-kotlin/tree/1-basic-start-kit)     
 
-[2. 기본적인 뮤지션 정보를 가져오는 API를 작성해 보자](https://github.com/basquiat78/music-store-with-kotlin/tree/2-musician-jpa-crud)
+[2. 기본적인 뮤지션 정보를 가져오는 API를 작성해 보자](https://github.com/basquiat78/music-store-with-kotlin/tree/2-musician-jpa-crud)     
+
+[3. 뮤지션 정보를 create/update 하는 API와 페이징처리를 해 보자](https://github.com/basquiat78/music-store-with-kotlin/tree/3-musician-jpa-crud-part2)
