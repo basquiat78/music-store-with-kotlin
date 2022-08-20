@@ -1,4 +1,4 @@
-package io.basquiat.common.domain
+package io.basquiat.musicstore.common.domain
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonPropertyOrder

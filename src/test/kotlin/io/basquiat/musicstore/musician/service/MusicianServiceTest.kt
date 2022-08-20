@@ -1,6 +1,7 @@
 package io.basquiat.musicstore.musician.service
 
 import io.basquiat.musicstore.musician.domain.code.GenreCode
+import io.basquiat.musicstore.musician.domain.vo.AlbumRequest
 import io.basquiat.musicstore.musician.domain.vo.MusicianRequest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName

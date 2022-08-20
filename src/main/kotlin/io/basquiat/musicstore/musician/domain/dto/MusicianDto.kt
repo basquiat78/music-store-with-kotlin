@@ -5,7 +5,7 @@ import io.basquiat.musicstore.musician.domain.code.GenreCode
 import io.basquiat.musicstore.musician.domain.entity.Musician
 
 /**
- * musicianDTO
+ * MusicianDto
  * created by basquiat
  */
 data class MusicianDto(
@@ -24,7 +24,7 @@ data class MusicianDto(
          * @param musician
          * @return MusicianDto
          */
-        fun create(musician: Musician): MusicianDto = with(musician) {
+        fun create(musician: Musician) = with(musician) {
             MusicianDto(name =  name, id = id, _genreCode = genre?: GenreCode.ETC)
         }
     }

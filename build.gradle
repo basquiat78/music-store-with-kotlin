@@ -5,6 +5,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.6.21'
     id 'org.jetbrains.kotlin.plugin.jpa' version '1.6.21'
     id 'org.jetbrains.kotlin.plugin.spring' version '1.6.21'
+    id "org.jetbrains.kotlin.plugin.allopen" version "1.6.21"
     id 'org.jetbrains.kotlin.kapt' version '1.6.21'
 }
 
@@ -39,6 +40,12 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+}
+
+allOpen {
+    annotation("javax.persistence.Entity")
+    annotation("javax.persistence.MappedSuperclass")
+    annotation("javax.persistence.Embeddable")
 }
 
 tasks.named('test') {

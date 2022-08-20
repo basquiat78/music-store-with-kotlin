@@ -1,4 +1,4 @@
-package io.basquiat.common.exception
+package io.basquiat.musicstore.common.exception
 
 import java.lang.RuntimeException
 

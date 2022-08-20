@@ -1,13 +1,15 @@
 package io.basquiat.musicstore.musician.domain.entity
 
-import io.basquiat.common.exception.MandatoryArgumentException
+import io.basquiat.musicstore.common.exception.MandatoryArgumentException
 import io.basquiat.musicstore.musician.domain.code.GenreCode
+import org.hibernate.annotations.DynamicUpdate
 import javax.persistence.*
 
 /**
  * created by basquiat
  */
 @Entity
+@DynamicUpdate
 @Table(name = "musician")
 class Musician(
 

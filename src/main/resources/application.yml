@@ -35,3 +35,6 @@ server:
     whitelabel:
       enabled: false
   port: 8081
+
+logging:
+  config: classpath:logback-spring.xml

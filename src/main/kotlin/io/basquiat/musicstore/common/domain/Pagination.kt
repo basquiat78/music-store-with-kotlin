@@ -1,4 +1,4 @@
-package io.basquiat.common.domain
+package io.basquiat.musicstore.common.domain
 
 /**
  * pagination

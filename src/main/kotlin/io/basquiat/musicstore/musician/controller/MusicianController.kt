@@ -1,8 +1,8 @@
 package io.basquiat.musicstore.musician.controller
 
-import io.basquiat.common.domain.Pagination
-import io.basquiat.common.domain.ResponseResult
-import io.basquiat.common.util.mandatoryParam
+import io.basquiat.musicstore.common.domain.Pagination
+import io.basquiat.musicstore.common.domain.ResponseResult
+import io.basquiat.musicstore.common.util.setPagination
 import io.basquiat.musicstore.musician.domain.code.GenreCode
 import io.basquiat.musicstore.musician.domain.dto.MusicianDto
 import io.basquiat.musicstore.musician.domain.vo.MusicianRequest
@@ -27,11 +27,7 @@ class MusicianController(
     @GetMapping("/musicians")
     fun musicians(pagination: Pagination): ResponseResult<List<MusicianDto>> {
         val musiciansWithPage = musicianService.fetchMusicians(PageRequest.of(pagination.offset, pagination.limit));
-        with(musiciansWithPage) {
-            pagination.totalCount = totalElements
-            pagination.totalPage = totalPages
-            pagination.last = isLast
-        }
+        setPagination(pagination, musiciansWithPage)
         return ResponseResult.of(musiciansWithPage.content, pagination)
     }
 
@@ -65,9 +61,7 @@ class MusicianController(
      *
      */
     @PostMapping("/musicians")
-    fun createMusician(@RequestBody request: MusicianRequest) {
-        musicianService.createMusician(request)
-    }
+    fun createMusician(@RequestBody request: MusicianRequest) = ResponseResult.of(musicianService.createMusician(request))
 
     /**
      * 뮤지션 정보를 변경하고 변경된 정보를 담아서 보내준다.
@@ -75,10 +69,6 @@ class MusicianController(
      * @return ResponseResult<MusicianDto>
      */
     @PatchMapping("/musicians")
-    fun updateMusician(@RequestBody request: MusicianRequest): ResponseResult<MusicianDto> {
-        val musicianId = request.id ?: mandatoryParam("변경할 뮤지션의 id는 필수 입니다.");
-        musicianService.updateMusician(request)
-        return ResponseResult.of(musicianService.fetchMusicianById(musicianId))
-    }
+    fun updateMusician(@RequestBody request: MusicianRequest) = ResponseResult.of(musicianService.updateMusician(request))
 
 }

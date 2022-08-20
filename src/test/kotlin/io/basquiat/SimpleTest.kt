@@ -1,8 +1,8 @@
 package io.basquiat
 
-import io.basquiat.common.util.convertToObject
-import io.basquiat.common.util.toJson
-import io.basquiat.common.util.typeRef
+import io.basquiat.musicstore.common.util.convertToObject
+import io.basquiat.musicstore.common.util.toJson
+import io.basquiat.musicstore.common.util.typeRef
 import io.basquiat.musicstore.musician.domain.code.GenreCode
 import io.basquiat.musicstore.musician.domain.entity.Musician
 import org.junit.jupiter.api.DisplayName
@@ -38,7 +38,7 @@ class SimpleTest {
         val list = listOf(Musician(id = 1, name =  "test111", genre = GenreCode.JAZZ), Musician(id = 2, name =  "test222", genre = GenreCode.JAZZ))
         val json = toJson(list)
         println(json)
-        val convertToObj = convertToObject(json, typeRef(Musician::class.java))
+        val convertToObj = convertToObject(json, typeRef<Musician>())
         println(convertToObj)
     }
 

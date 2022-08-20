@@ -1,6 +1,6 @@
-package io.basquiat.common.extensions
+package io.basquiat.musicstore.common.extensions
 
-import io.basquiat.common.util.objectEmpty
+import io.basquiat.musicstore.common.util.objectEmpty
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.findByIdOrNull
 
