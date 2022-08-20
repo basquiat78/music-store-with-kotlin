@@ -2,15 +2,8 @@ package io.basquiat.common.util
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-<<<<<<< HEAD
 import io.basquiat.common.exception.MandatoryArgumentException
 import io.basquiat.common.exception.ObjectEmptyException
-=======
-import com.fasterxml.jackson.module.kotlin.readValue
-import io.basquiat.common.exception.MandatoryArgumentException
-import io.basquiat.common.exception.ObjectEmptyException
-import io.basquiat.musicstore.musician.domain.entity.Musician
->>>>>>> 3a7b944a1ba5f72895e2bf5468fcba4c8130f315
 
 /**
  * 메세지가 없는 경우
